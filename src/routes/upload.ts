@@ -7,7 +7,7 @@ import { App } from '../app'
 import { bucket } from '../common/google-cloud'
 
 export default async (fastify: App, opts: Record<never, never>) => {
-  fastify.get('/upload/image', async (req, reply) => {
+  fastify.post('/upload/image', async (req, reply) => {
     const files = req.files()
     const result: any[] = []
 
