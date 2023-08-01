@@ -3,9 +3,10 @@ import path from 'path'
 
 import { FastifyPluginAsync } from 'fastify'
 
+import { App } from '../app'
 import { bucket } from '../common/google-cloud'
 
-const upload: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
+export default async (fastify: App, opts: Record<never, never>) => {
   fastify.get('/upload/image', async (req, reply) => {
     const files = req.files()
     const result: any[] = []
@@ -46,5 +47,3 @@ const upload: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     return reply.send(result)
   })
 }
-
-export default upload

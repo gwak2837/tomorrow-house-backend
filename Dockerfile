@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY . .
 RUN npm i
-RUN node esbuild.js
+RUN npm run build
 
 # Copy bundle only
 FROM node:18 AS runner

@@ -1,9 +1,7 @@
-import { FastifyPluginAsync } from 'fastify'
+import { App } from '../app'
 
-const auth: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
+export default async (fastify: App, opts: Record<never, never>) => {
   fastify.get('/auth', async (request, reply) => {
     return 'this is an example'
   })
 }
-
-export default auth

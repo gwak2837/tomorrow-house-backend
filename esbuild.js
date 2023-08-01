@@ -4,7 +4,6 @@ esbuild
   .build({
     bundle: true,
     entryPoints: ['src/app.ts'],
-    // format: 'esm',
     loader: {
       '.sql': 'text',
     },

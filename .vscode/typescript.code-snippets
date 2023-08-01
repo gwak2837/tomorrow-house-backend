@@ -1,32 +1,44 @@
 {
-  "Fastify Routes": {
+  "Fastify plugin": {
+    "prefix": "plugin",
+    "body": [
+      "import ${TM_FILENAME_BASE}, {  } from '@fastify/${TM_FILENAME_BASE}'",
+      "import fp from 'fastify-plugin'",
+      "",
+      "export default fp<>(async (fastify) => {",
+      "  fastify.register(${TM_FILENAME_BASE}, {",
+      "  })",
+      "),})",
+      ""
+    ],
+    "description": "Fastify plugin"
+  },
+  "Fastify route": {
     "prefix": "route",
     "body": [
-      "import { Type } from '@sinclair/typebox'",
+      "import { App } from '../app'",
       "",
-      "import { TFastify } from '..'",
-      "",
-      "export default async function routes(fastify: TFastify) {",
+      "export default async (fastify: App, opts: Record<never, never>) => {",
       "  const schema = {",
       "    querystring: Type.Object({",
-      "      count: Type.Optional(Type.Number()),",
+      "      foo: Type.Optional(Type.Number()),",
+      "      bar: Type.Optional(Type.String()),",
       "    }),",
-      "    body: Type.Object({",
-      "      count: Type.Optional(Type.Number()),",
-      "    }),",
+      "    response: {",
+      "      200: Type.Object({",
+      "        hello: Type.String(),",
+      "        foo: Type.Optional(Type.Number()),",
+      "        bar: Type.Optional(Type.String()),",
+      "      }),",
+      "    },",
       "  }",
       "",
       "  fastify.get('/${TM_FILENAME_BASE}', { schema }, async (req, reply) => {",
-      "    const { count } = req.query",
-      "",
-      "    const user = req.user",
-      "    if (!user) throw UnauthorizedError('로그인 후 시도해주세요')",
-      "",
-      "    return { hello: '${TM_FILENAME_BASE}' }",
+      "    return { hello: 'world' }",
       "  })",
       "}",
       ""
     ],
-    "description": "Fastify Routes"
+    "description": "Fastify route"
   }
 }

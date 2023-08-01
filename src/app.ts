@@ -1,18 +1,25 @@
 import 'dotenv/config'
 
-import type { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
+import { networkInterfaces } from 'os'
+
+import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import closeWithGrace from 'close-with-grace'
 import Fastify from 'fastify'
 
 import {
   FASTIFY_CLOSE_GRACE_DELAY,
+  K_SERVICE,
   LOCALHOST_HTTPS_CERT,
   LOCALHOST_HTTPS_KEY,
+  NODE_ENV,
   PGURI,
   PORT,
+  PROJECT_ENV,
 } from './common/constants'
 import { pool } from './common/postgres'
+import cors from './plugins/cors'
 import multipart from './plugins/multipart'
+import rateLimit from './plugins/rate-limit'
 import sensible from './plugins/sensible'
 import support from './plugins/support'
 import auth from './routes/auth'
@@ -33,21 +40,17 @@ export const app = Fastify({
     }),
 }).withTypeProvider<TypeBoxTypeProvider>()
 
-app.register(async (fastify, opts): Promise<void> => {
-  // This loads all plugins defined in plugins
-  // those should be support plugins that are reused
-  // through your application
-  fastify.register(multipart)
-  fastify.register(sensible)
-  fastify.register(support)
-  fastify.register(multipart)
+export type App = typeof app
 
-  // This loads all plugins defined in routes
-  // define your routes in one of these
-  fastify.register(upload)
-  fastify.register(auth)
-  fastify.register(root)
-})
+app.register(cors)
+app.register(multipart)
+app.register(rateLimit)
+app.register(sensible)
+app.register(support)
+
+app.register(auth)
+app.register(root)
+app.register(upload)
 
 // delay is the number of milliseconds for the graceful close to finish
 const closeListeners = closeWithGrace(
@@ -66,12 +69,19 @@ app.addHook('onClose', (instance, done) => {
 })
 
 // Start listening
-app.listen({ port: +PORT || 4000 }, (err) => {
-  if (err) {
-    app.log.error(err)
-    process.exit(1)
-  }
-})
+const nets = networkInterfaces()
+
+app
+  .listen({
+    host: K_SERVICE || PROJECT_ENV === 'local-docker' ? '0.0.0.0' : 'localhost',
+    port: +PORT || 4000,
+  })
+  .then((url) => {
+    console.log(`🚀 Server ready at: ${url}`)
+    if (NODE_ENV !== 'production' && nets.en0)
+      console.log(`🚀 On Your Network: https://${nets.en0[1].address}:${PORT}`)
+  })
+  .catch((error) => console.error('Cannot start API server... \n' + error))
 
 // Connect to the database server
 pool

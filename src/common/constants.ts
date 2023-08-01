@@ -5,9 +5,11 @@ export const K_SERVICE = process.env.K_SERVICE as string // GCP에서 실행 중
 // 공통
 export const PORT = process.env.PORT as string
 
-export const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN as string
+export const PROJECT_ENV = process.env.PROJECT_ENV as string
 
 export const FASTIFY_CLOSE_GRACE_DELAY = process.env.FASTIFY_CLOSE_GRACE_DELAY as string
+
+export const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN as string
 
 export const GOOGLE_CLOUD_STORAGE_BUCKET = process.env.GOOGLE_CLOUD_STORAGE_BUCKET as string
 
@@ -31,5 +33,5 @@ export const REDIS_CLIENT_KEY = process.env.REDIS_CLIENT_KEY as string
 export const REDIS_CLIENT_CERT = process.env.REDIS_CLIENT_CERT as string
 
 ////////////////////////////////////////
-export const PROJECT_ENV = process.env.PROJECT_ENV as string
+
 export const FRONTEND_URL = process.env.FRONTEND_URL as string

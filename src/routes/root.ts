@@ -1,9 +1,23 @@
-import { FastifyPluginAsync } from 'fastify'
+import { Type } from '@sinclair/typebox'
 
-const root: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  fastify.get('/', async function (request, reply) {
+import { App } from '../app'
+
+export default async (fastify: App, opts: Record<never, never>) => {
+  const schema = {
+    querystring: Type.Object({
+      foo: Type.Optional(Type.Number()),
+      bar: Type.Optional(Type.String()),
+    }),
+    response: {
+      200: Type.Object({
+        hello: Type.String(),
+        foo: Type.Optional(Type.Number()),
+        bar: Type.Optional(Type.String()),
+      }),
+    },
+  }
+
+  fastify.get('/', { schema }, async (req, reply) => {
     return { hello: 'world' }
   })
 }
-
-export default root
