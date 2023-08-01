@@ -22,6 +22,7 @@ import cors from './plugins/cors'
 import multipart from './plugins/multipart'
 import rateLimit from './plugins/rate-limit'
 import sensible from './plugins/sensible'
+import serverSentEvents from './plugins/server-sent-events'
 import support from './plugins/support'
 import auth from './routes/auth'
 import root from './routes/root'
@@ -47,6 +48,7 @@ app.register(cors)
 app.register(multipart)
 app.register(rateLimit)
 app.register(sensible)
+app.register(serverSentEvents)
 app.register(support)
 
 app.register(auth)
