@@ -8,7 +8,7 @@ RUN npm i
 RUN npm run build
 
 # Copy bundle only
-FROM node:18 AS runner
+FROM node:18-alpine AS runner
 
 EXPOSE $PORT
 

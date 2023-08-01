@@ -17,6 +17,7 @@ import {
   PROJECT_ENV,
 } from './common/constants'
 import { pool } from './common/postgres'
+import { replicate } from './common/replicate'
 import cors from './plugins/cors'
 import multipart from './plugins/multipart'
 import rateLimit from './plugins/rate-limit'
@@ -93,11 +94,13 @@ pool
   )
   .catch((error) => console.error('Cannot connect to PostgreSQL server... \n' + error))
 
-// replicate.run(
-//   'cjwbw/semantic-segment-anything:b2691db53f2d96add0051a4a98e7a3861bd21bf5972031119d344d956d2f8256',
-//   {
+// replicate
+//   .run('hjgp/dep2img:12', {
 //     input: {
-//       image: '...',
+//       prompt: 'a 19th century portrait of a raccoon gentleman wearing a suit',
 //     },
-//   },
-// )
+//   })
+//   .then((a2) => {
+//     console.log(JSON.stringify(a2, null, 2))
+//   })
+//   .catch((error) => console.error('Cannot connect to Replicate server... \n' + error))
