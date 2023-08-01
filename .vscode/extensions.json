@@ -1,0 +1,17 @@
+{
+  "recommendations": [
+    "visualstudioexptteam.vscodeintellicode",
+    "christian-kohler.npm-intellisense",
+    "christian-kohler.path-intellisense",
+    "tabnine.tabnine-vscode",
+    "amatiasq.sort-imports",
+    "ms-azuretools.vscode-docker",
+    "mtxr.sqltools",
+    "foxundermoon.shell-format",
+    "ckolkman.vscode-postgres",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "arcanis.vscode-zipfs",
+    "ChakrounAnas.turbo-console-log"
+  ]
+}

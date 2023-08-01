@@ -1,0 +1,7 @@
+{
+  "SQL": {
+    "prefix": "name",
+    "body": ["/* @name ${TM_FILENAME_BASE} */", ""],
+    "description": "SQL"
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "name": "tomorrow-house-backend",
+  "version": "0.1.0",
+  "description": "This project was bootstrapped with Fastify-CLI.",
+  "main": "src/app.ts",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "npm run build:ts && tsc -p test/tsconfig.json && tap --ts \"test/**/*.test.ts\"",
+    "start": "fastify start -l info dist/app.js",
+    "build:ts": "tsc",
+    "watch:ts": "tsc -w",
+    "dev": "npm run build:ts && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
+    "dev:start": "fastify start --ignore-watch=.ts$ -w -l info -P dist/app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/autoload": "^5.7.1",
+    "@fastify/cors": "^8.2.0",
+    "@fastify/error": "^3.2.0",
+    "@fastify/jwt": "^6.5.0",
+    "@fastify/multipart": "^7.7.3",
+    "@fastify/oauth2": "^7.2.2",
+    "@fastify/rate-limit": "^7.6.0",
+    "@fastify/sensible": "^5.2.0",
+    "@google-cloud/storage": "^6.12.0",
+    "fastify": "^4.21.0",
+    "fastify-cli": "^5.8.0",
+    "fastify-plugin": "^4.5.1",
+    "pg": "^8.11.1",
+    "replicate": "^0.14.1"
+  },
+  "devDependencies": {
+    "@fastify/type-provider-typebox": "^2.4.0",
+    "@types/node": "^20.4.5",
+    "@types/pg": "^8.10.2",
+    "@types/tap": "^15.0.8",
+    "concurrently": "^8.2.0",
+    "esbuild": "^0.18.17",
+    "eslint": "^8.30.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-standard": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.6.0",
+    "eslint-plugin-promise": "^6.1.1",
+    "fastify-tsconfig": "^1.0.1",
+    "prettier": "^3.0.0",
+    "tap": "^16.3.8",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "type": "module"
+}
