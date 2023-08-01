@@ -32,6 +32,7 @@
     "fastify": "^4.21.0",
     "fastify-cli": "^5.8.0",
     "fastify-plugin": "^4.5.1",
+    "fastify-sse-v2": "^3.1.2",
     "pg": "^8.11.1",
     "replicate": "^0.14.1"
   },

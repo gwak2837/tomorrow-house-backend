@@ -95,9 +95,9 @@ pool
   .catch((error) => console.error('Cannot connect to PostgreSQL server... \n' + error))
 
 // replicate
-//   .run('hjgp/dep2img:12', {
+//   .run('hjgp/dep2img:728be3b7e4b13b9d0449d33924aabb199a5395ccaf930421461982b6add31a74', {
 //     input: {
-//       prompt: 'a 19th century portrait of a raccoon gentleman wearing a suit',
+//       before_image_path: '',
 //     },
 //   })
 //   .then((a2) => {
