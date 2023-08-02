@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import path from 'path'
 
-import { SchemaOptions, Type } from '@sinclair/typebox'
+import { Type } from '@sinclair/typebox'
 
 import { App } from '../app.js'
 import { bucket } from '../common/google-cloud.js'
@@ -72,6 +72,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
   fastify.post('/upload/image/ai', { schema }, async (req, reply) => {
     const files = req.files({ limits: { files: 1 } })
     const imageGCP = { url: '', description: '' }
+    let spaceCategory = ''
 
     const sseClient = sseClients.find((client) => client.id === req.query.clientId)
     if (!sseClient) throw reply.badRequest('No SSE client available')
@@ -80,11 +81,12 @@ export default async (fastify: App, opts: Record<never, never>) => {
     for await (const file of files) {
       if (!file) throw reply.badRequest('No file')
 
-      if (!file.fieldname || typeof +file.fieldname !== 'number')
-        throw reply.badRequest('Fieldname must be SSE client id (number)')
-
       if (!file.mimetype.startsWith('image/'))
         throw reply.badRequest('Only image file can be uploaded')
+
+      if (!file.fieldname) throw reply.badRequest('Fieldname must be space category')
+
+      spaceCategory = file.fieldname
 
       const timestamp = ~~(Date.now() / 1000)
       const fileExtension = path.extname(file.filename)
@@ -93,7 +95,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
 
       blobStream.on('error', (err) => {
         console.error(err)
-        throw fastify.httpErrors.serviceUnavailable('File upload to Google Cloud failed')
+        throw reply.serviceUnavailable('File upload to Google Cloud failed')
       })
 
       blobStream.on('finish', () => {
@@ -111,8 +113,8 @@ export default async (fastify: App, opts: Record<never, never>) => {
       })
     }
 
-    if (!imageGCP.url)
-      throw fastify.httpErrors.serviceUnavailable('File upload to Google Cloud failed')
+    if (!spaceCategory) throw reply.badRequest('Fieldname must be space category')
+    if (!imageGCP.url) throw reply.serviceUnavailable('File upload to Google Cloud failed.')
 
     sseClient.reply.sse({ event: 'images', id: 'gcp', data: JSON.stringify([imageGCP]) })
 
@@ -121,7 +123,8 @@ export default async (fastify: App, opts: Record<never, never>) => {
       'hjgp/img2img:3aa53804847d9f1b29355673776a79348e9e287194c3135956a220bf9db7a58a',
       {
         input: {
-          before_image_path: imageGCP.url,
+          input_image: imageGCP.url,
+          space: spaceCategory,
         },
       },
     )) as string[]
