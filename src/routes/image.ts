@@ -107,7 +107,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
 
     for (const image of images) {
       replicate
-        .run('hjgp/ram:30e31665a03172112d56951605c513a555136afa8bec8c8860555aeec0a14a57', {
+        .run('hjgp/ram:af37d56889e57f4d37ed0cb663179049ee7448094a0eef0af55dcd6e81038f1b', {
           input: { input_image: image.url },
         })
         .then((segmentation) =>
@@ -158,7 +158,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
 
     for (const image of images) {
       replicate
-        .run('hjgp/ram:30e31665a03172112d56951605c513a555136afa8bec8c8860555aeec0a14a57', {
+        .run('hjgp/ram:af37d56889e57f4d37ed0cb663179049ee7448094a0eef0af55dcd6e81038f1b', {
           input: { input_image: image.url },
         })
         .then((segmentation) =>
