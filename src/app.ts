@@ -24,8 +24,8 @@ import sensible from './plugins/sensible.js'
 import serverSentEvents from './plugins/server-sent-events.js'
 import support from './plugins/support.js'
 import auth from './routes/auth.js'
+import upload from './routes/image.js'
 import root from './routes/root.js'
-import upload from './routes/upload.js'
 
 // Instantiate Fastify with some config
 export const app = Fastify({
