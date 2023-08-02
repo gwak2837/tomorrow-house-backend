@@ -6,6 +6,7 @@ import { Type } from '@sinclair/typebox'
 import { App } from '../app.js'
 import { bucket } from '../common/google-cloud.js'
 import { replicate } from '../common/replicate.js'
+import { generateUniqueId } from '../common/utils.js'
 
 type SSEClient = {
   id: string
@@ -63,6 +64,12 @@ export default async (fastify: App, opts: Record<never, never>) => {
     return imageURL
   })
 
+  type Image = {
+    id: string
+    url: string
+    segmentation?: any
+  }
+
   const schema = {
     body: Type.Object({
       clientId: Type.String(),
@@ -77,7 +84,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
     const sseClient = sseClients.find((client) => client.id === clientId)
     if (!sseClient) throw reply.badRequest('No SSE client available')
 
-    const i2iImageURLs = await replicate.run(
+    const i2iImageURLs = (await replicate.run(
       'hjgp/img2img:3aa53804847d9f1b29355673776a79348e9e287194c3135956a220bf9db7a58a',
       {
         input: {
@@ -85,55 +92,50 @@ export default async (fastify: App, opts: Record<never, never>) => {
           space: spaceCategory,
         },
       },
-    )
+    )) as string[]
+
+    const images: Image[] = i2iImageURLs.map((url) => ({
+      id: generateUniqueId(),
+      url,
+    }))
 
     sseClient.reply.sse({
       event: 'image',
       id: 'i2i',
-      data: JSON.stringify(i2iImageURLs as string[]),
+      data: JSON.stringify(images),
     })
 
-    const segmentation = await replicate.run(
-      'hjgp/ram:58287d22f600cfc60736d190ade7f7cf5e790d4a7313e88ba35a08b89bd5c7f6',
-      { input: { input_image: imageURL } },
-    )
-
-    sseClient.reply.sse({
-      event: 'segmentation',
-      id: 'ai',
-      data: JSON.stringify(segmentation),
-    })
-  })
-
-  const schema2 = {
-    body: Type.Object({
-      imageURL: Type.String(),
-    }),
-  }
-
-  fastify.post('/image/ai/seg', { schema: schema2 }, async (req, reply) => {
-    const { imageURL } = req.body
-
-    const segmentation = await replicate.run(
-      'hjgp/ram:58287d22f600cfc60736d190ade7f7cf5e790d4a7313e88ba35a08b89bd5c7f6',
-      { input: { input_image: imageURL } },
-    )
-    console.log('👀 ~ segmentation:', segmentation)
-
-    return segmentation
+    for (const image of images) {
+      replicate
+        .run('hjgp/ram:58287d22f600cfc60736d190ade7f7cf5e790d4a7313e88ba35a08b89bd5c7f6', {
+          input: { input_image: image.url },
+        })
+        .then((segmentation) =>
+          sseClient.reply.sse({
+            event: 'segmentation',
+            id: image.id,
+            data: JSON.stringify((segmentation as string[])[3]),
+          }),
+        )
+    }
   })
 
   const schema3 = {
     body: Type.Object({
+      clientId: Type.String(),
       targetImageURL: Type.String(),
       maskImageURL: Type.String(),
     }),
   }
 
   fastify.post('/image/ai/inpaint', { schema: schema3 }, async (req, reply) => {
-    const { targetImageURL, maskImageURL } = req.body
+    const { clientId, targetImageURL, maskImageURL } = req.body
 
-    const inpaintImageURLs = await replicate.run(
+    const sseClient = sseClients.find((client) => client.id === clientId)
+    if (!sseClient) throw reply.badRequest('No SSE client available')
+
+    // 15~20 seconds
+    const inpaintImageURLs = (await replicate.run(
       'hjgp/inpaint2img:9c0d69fae6f2435c4768eaf01eb841b470e90f6f121b643c3b200255a6e9b5a8',
       {
         input: {
@@ -141,9 +143,31 @@ export default async (fastify: App, opts: Record<never, never>) => {
           input_mask_image: maskImageURL,
         },
       },
-    )
-    console.log('👀 ~ inpaintImageURLs:', inpaintImageURLs)
+    )) as string[]
 
-    return inpaintImageURLs
+    const images: Image[] = inpaintImageURLs.map((url) => ({
+      id: generateUniqueId(),
+      url,
+    }))
+
+    sseClient.reply.sse({
+      event: 'image',
+      id: 'inpaint',
+      data: JSON.stringify(images),
+    })
+
+    for (const image of images) {
+      replicate
+        .run('hjgp/ram:58287d22f600cfc60736d190ade7f7cf5e790d4a7313e88ba35a08b89bd5c7f6', {
+          input: { input_image: image.url },
+        })
+        .then((segmentation) =>
+          sseClient.reply.sse({
+            event: 'segmentation',
+            id: image.id,
+            data: JSON.stringify((segmentation as string[])[3]),
+          }),
+        )
+    }
   })
 }
