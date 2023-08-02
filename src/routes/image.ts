@@ -36,8 +36,6 @@ export default async (fastify: App, opts: Record<never, never>) => {
       if (!file.mimetype.startsWith('image/'))
         throw reply.badRequest('Only image file can be uploaded')
 
-      if (!file.fieldname) throw reply.badRequest('Fieldname must be space category')
-
       const timestamp = ~~(Date.now() / 1000)
       const fileExtension = path.extname(file.filename)
       const fileName = `${timestamp}-${randomUUID()}${fileExtension}`
@@ -79,7 +77,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
     const sseClient = sseClients.find((client) => client.id === clientId)
     if (!sseClient) throw reply.badRequest('No SSE client available')
 
-    const i2iImageURLs = (await replicate.run(
+    const i2iImageURLs = await replicate.run(
       'hjgp/img2img:3aa53804847d9f1b29355673776a79348e9e287194c3135956a220bf9db7a58a',
       {
         input: {
@@ -87,12 +85,12 @@ export default async (fastify: App, opts: Record<never, never>) => {
           space: spaceCategory,
         },
       },
-    )) as string[]
+    )
 
     sseClient.reply.sse({
-      event: 'images',
-      id: 'ai',
-      data: JSON.stringify(i2iImageURLs.map((url) => ({ url }))),
+      event: 'image',
+      id: 'i2i',
+      data: JSON.stringify(i2iImageURLs as string[]),
     })
 
     const segmentation = await replicate.run(
@@ -101,7 +99,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
     )
 
     sseClient.reply.sse({
-      event: 'images',
+      event: 'segmentation',
       id: 'ai',
       data: JSON.stringify(segmentation),
     })
@@ -136,7 +134,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
     const { targetImageURL, maskImageURL } = req.body
 
     const inpaintImageURLs = await replicate.run(
-      'hjgp/inpaint2img:405e2de5d9bc773467b0228a694b9ced2bde90780bd8b8c501645050dddf735f',
+      'hjgp/inpaint2img:9c0d69fae6f2435c4768eaf01eb841b470e90f6f121b643c3b200255a6e9b5a8',
       {
         input: {
           input_image: targetImageURL,
