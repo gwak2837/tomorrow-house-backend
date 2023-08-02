@@ -15,44 +15,7 @@ type SSEClient = {
 export let sseClients: SSEClient[] = []
 
 export default async (fastify: App, opts: Record<never, never>) => {
-  fastify.post('/upload/image', async (req, res) => {
-    const files = req.files({ limits: { files: 1 } })
-    let result
-
-    for await (const file of files) {
-      if (!file) throw fastify.httpErrors.badRequest('No file')
-
-      if (!file.mimetype.startsWith('image/'))
-        throw fastify.httpErrors.badRequest('Only image file can be uploaded')
-
-      const timestamp = ~~(Date.now() / 1000)
-      const fileExtension = path.extname(file.filename)
-      const fileName = `${timestamp}-${randomUUID()}${fileExtension}`
-      const blobStream = bucket.file(fileName).createWriteStream()
-
-      blobStream.on('error', (err) => {
-        console.error(err)
-        throw fastify.httpErrors.serviceUnavailable('File upload to Google Cloud failed')
-      })
-
-      blobStream.on('finish', () => {
-        result = {
-          fileName: file.filename,
-          url: `https://storage.googleapis.com/${bucket.name}/${fileName}`,
-        }
-      })
-
-      // 1. Stream
-      // pipeline(file.file, blobStream)
-
-      // 2. Buffer
-      await new Promise(async (resolve) => blobStream.end(await file.toBuffer(), () => resolve('')))
-    }
-
-    return res.send(result)
-  })
-
-  fastify.get('/upload/image/ai', async (req, reply) => {
+  fastify.get('/image', async (req, reply) => {
     const id = String(Date.now())
     sseClients.push({ id, reply })
 
@@ -63,21 +26,10 @@ export default async (fastify: App, opts: Record<never, never>) => {
     })
   })
 
-  const schema = {
-    querystring: Type.Object({
-      clientId: Type.String(),
-    }),
-  }
-
-  fastify.post('/upload/image/ai', { schema }, async (req, reply) => {
+  fastify.post('/image/upload', async (req, reply) => {
     const files = req.files({ limits: { files: 1 } })
-    const imageGCP = { url: '', description: '' }
-    let spaceCategory = ''
+    let imageURL
 
-    const sseClient = sseClients.find((client) => client.id === req.query.clientId)
-    if (!sseClient) throw reply.badRequest('No SSE client available')
-
-    // GCP image upload
     for await (const file of files) {
       if (!file) throw reply.badRequest('No file')
 
@@ -85,8 +37,6 @@ export default async (fastify: App, opts: Record<never, never>) => {
         throw reply.badRequest('Only image file can be uploaded')
 
       if (!file.fieldname) throw reply.badRequest('Fieldname must be space category')
-
-      spaceCategory = file.fieldname
 
       const timestamp = ~~(Date.now() / 1000)
       const fileExtension = path.extname(file.filename)
@@ -99,8 +49,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
       })
 
       blobStream.on('finish', () => {
-        imageGCP.url = `https://storage.googleapis.com/${bucket.name}/${fileName}`
-        imageGCP.description = file.filename
+        imageURL = `https://storage.googleapis.com/${bucket.name}/${fileName}`
       })
 
       // 1. Stream
@@ -113,17 +62,28 @@ export default async (fastify: App, opts: Record<never, never>) => {
       })
     }
 
-    if (!spaceCategory) throw reply.badRequest('Fieldname must be space category')
-    if (!imageGCP.url) throw reply.serviceUnavailable('File upload to Google Cloud failed.')
+    return imageURL
+  })
 
-    sseClient.reply.sse({ event: 'images', id: 'gcp', data: JSON.stringify([imageGCP]) })
+  const schema = {
+    body: Type.Object({
+      clientId: Type.String(),
+      imageURL: Type.String(),
+      spaceCategory: Type.String(),
+    }),
+  }
 
-    // AI: image to image
-    const imageURLs = (await replicate.run(
+  fastify.post('/image/ai/i2i', { schema }, async (req, reply) => {
+    const { clientId, imageURL, spaceCategory } = req.body
+
+    const sseClient = sseClients.find((client) => client.id === clientId)
+    if (!sseClient) throw reply.badRequest('No SSE client available')
+
+    const i2iImageURLs = (await replicate.run(
       'hjgp/img2img:3aa53804847d9f1b29355673776a79348e9e287194c3135956a220bf9db7a58a',
       {
         input: {
-          input_image: imageGCP.url,
+          input_image: imageURL,
           space: spaceCategory,
         },
       },
@@ -132,22 +92,60 @@ export default async (fastify: App, opts: Record<never, never>) => {
     sseClient.reply.sse({
       event: 'images',
       id: 'ai',
-      data: JSON.stringify(imageURLs.map((url) => ({ url }))),
+      data: JSON.stringify(i2iImageURLs.map((url) => ({ url }))),
     })
 
-    // // AI: image to coords
-    // const result2 = await replicate.run(
-    //   'hjgp/dep2img:728be3b7e4b13b9d0449d33924aabb199a5395ccaf930421461982b6add31a74',
-    //   {
-    //     input: {
-    //       before_image_path: imageGCP.url,
-    //     },
-    //   },
-    // )
-    // console.log('👀 ~ result2:', result2)
+    const segmentation = await replicate.run(
+      'hjgp/ram:58287d22f600cfc60736d190ade7f7cf5e790d4a7313e88ba35a08b89bd5c7f6',
+      { input: { input_image: imageURL } },
+    )
 
-    // sseClient.reply.sse({ event: 'coords', data: JSON.stringify(result2) })
+    sseClient.reply.sse({
+      event: 'images',
+      id: 'ai',
+      data: JSON.stringify(segmentation),
+    })
   })
 
-  fastify.get('/upload/image/ai/object', async (req, reply) => {})
+  const schema2 = {
+    body: Type.Object({
+      imageURL: Type.String(),
+    }),
+  }
+
+  fastify.post('/image/ai/seg', { schema: schema2 }, async (req, reply) => {
+    const { imageURL } = req.body
+
+    const segmentation = await replicate.run(
+      'hjgp/ram:58287d22f600cfc60736d190ade7f7cf5e790d4a7313e88ba35a08b89bd5c7f6',
+      { input: { input_image: imageURL } },
+    )
+    console.log('👀 ~ segmentation:', segmentation)
+
+    return segmentation
+  })
+
+  const schema3 = {
+    body: Type.Object({
+      targetImageURL: Type.String(),
+      maskImageURL: Type.String(),
+    }),
+  }
+
+  fastify.post('/image/ai/inpaint', { schema: schema3 }, async (req, reply) => {
+    const { targetImageURL, maskImageURL } = req.body
+
+    const inpaintImageURLs = await replicate.run(
+      'hjgp/inpaint2img:405e2de5d9bc773467b0228a694b9ced2bde90780bd8b8c501645050dddf735f',
+      {
+        input: {
+          input_image: targetImageURL,
+          input_mask_image: maskImageURL,
+        },
+      },
+    )
+    console.log('👀 ~ inpaintImageURLs:', inpaintImageURLs)
+
+    return inpaintImageURLs
+  })
 }
