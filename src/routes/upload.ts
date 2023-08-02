@@ -1,10 +1,11 @@
 import { randomUUID } from 'crypto'
 import path from 'path'
 
-import { App } from '../app'
-import { bucket } from '../common/google-cloud'
-import { replicate } from '../common/replicate'
-import { sleep } from '../common/utils'
+import { SchemaOptions, Type } from '@sinclair/typebox'
+
+import { App } from '../app.js'
+import { bucket } from '../common/google-cloud.js'
+import { replicate } from '../common/replicate.js'
 
 type SSEClient = {
   id: string
@@ -19,7 +20,6 @@ export default async (fastify: App, opts: Record<never, never>) => {
     let result
 
     for await (const file of files) {
-      console.log('👀 ~ file:', file)
       if (!file) throw fastify.httpErrors.badRequest('No file')
 
       if (!file.mimetype.startsWith('image/'))
@@ -63,10 +63,18 @@ export default async (fastify: App, opts: Record<never, never>) => {
     })
   })
 
-  fastify.post('/upload/image/ai', async (req, reply) => {
+  const schema = {
+    querystring: Type.Object({
+      clientId: Type.String(),
+    }),
+  }
+
+  fastify.post('/upload/image/ai', { schema }, async (req, reply) => {
     const files = req.files({ limits: { files: 1 } })
     const imageGCP = { url: '', description: '' }
-    let sseClient
+
+    const sseClient = sseClients.find((client) => client.id === req.query.clientId)
+    if (!sseClient) throw reply.badRequest('No SSE client available')
 
     // GCP image upload
     for await (const file of files) {
@@ -77,8 +85,6 @@ export default async (fastify: App, opts: Record<never, never>) => {
 
       if (!file.mimetype.startsWith('image/'))
         throw reply.badRequest('Only image file can be uploaded')
-
-      sseClient = sseClients.find((client) => client.id === file.fieldname)
 
       const timestamp = ~~(Date.now() / 1000)
       const fileExtension = path.extname(file.filename)
@@ -108,13 +114,11 @@ export default async (fastify: App, opts: Record<never, never>) => {
     if (!imageGCP.url)
       throw fastify.httpErrors.serviceUnavailable('File upload to Google Cloud failed')
 
-    if (!sseClient) throw reply.badRequest('No SSE client available')
-
     sseClient.reply.sse({ event: 'images', id: 'gcp', data: JSON.stringify([imageGCP]) })
 
     // AI: image to image
     const imageURLs = (await replicate.run(
-      'hjgp/dep2img:728be3b7e4b13b9d0449d33924aabb199a5395ccaf930421461982b6add31a74',
+      'hjgp/img2img:3aa53804847d9f1b29355673776a79348e9e287194c3135956a220bf9db7a58a',
       {
         input: {
           before_image_path: imageGCP.url,

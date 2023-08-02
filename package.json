@@ -7,12 +7,11 @@
     "test": "test"
   },
   "scripts": {
-    "dev:build": "tsc",
-    "dev:watch": "tsc -w",
-    "dev:start": "NODE_ENV=development nodemon -r dotenv/config dist/app.js dotenv_config_path=.env.local.dev",
-    "dev": "npm run dev:build && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:dev:watch\" \"npm:dev:start\"",
+    "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:dev:build\" \"npm:dev:start\"",
+    "dev:build": "NODE_ENV=development node esbuild.js",
+    "dev:start": "NODE_ENV=development nodemon -r dotenv/config out/index.cjs dotenv_config_path=.env.local.dev",
     "build": "NODE_ENV=production node esbuild.js",
-    "start": "NODE_ENV=production node -r dotenv/config out/index.cjs dotenv_config_path=.env.local",
+    "start": "NODE_ENV=production node -r dotenv/config dist/index.cjs dotenv_config_path=.env.local",
     "test": "npm run build:ts && tsc -p test/tsconfig.json && tap --ts \"test/**/*.test.ts\""
   },
   "keywords": [],
@@ -55,5 +54,11 @@
     "tap": "^16.3.8",
     "ts-node": "^10.9.1",
     "typescript": "^5.1.6"
-  }
+  },
+  "overrides": {
+    "gaxios": {
+      "node-fetch": "^3.3.2"
+    }
+  },
+  "type": "module"
 }

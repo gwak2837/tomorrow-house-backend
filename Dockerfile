@@ -16,6 +16,6 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-COPY --from=builder /app/out/index.cjs ./
+COPY --from=builder /app/dist/index.cjs ./
 
 ENTRYPOINT ["node", "index.cjs"]

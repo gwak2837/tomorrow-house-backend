@@ -1,7 +1,7 @@
 import pg from 'pg'
 
-import { app } from '../app'
-import { NODE_ENV, PGURI, POSTGRES_CA, POSTGRES_CERT, POSTGRES_KEY } from '../common/constants'
+import { app } from '../app.js'
+import { NODE_ENV, PGURI, POSTGRES_CA, POSTGRES_CERT, POSTGRES_KEY } from '../common/constants.js'
 
 const { Pool } = pg
 

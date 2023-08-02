@@ -15,18 +15,17 @@ import {
   PGURI,
   PORT,
   PROJECT_ENV,
-} from './common/constants'
-import { pool } from './common/postgres'
-import { replicate } from './common/replicate'
-import cors from './plugins/cors'
-import multipart from './plugins/multipart'
-import rateLimit from './plugins/rate-limit'
-import sensible from './plugins/sensible'
-import serverSentEvents from './plugins/server-sent-events'
-import support from './plugins/support'
-import auth from './routes/auth'
-import root from './routes/root'
-import upload from './routes/upload'
+} from './common/constants.js'
+import { pool } from './common/postgres.js'
+import cors from './plugins/cors.js'
+import multipart from './plugins/multipart.js'
+import rateLimit from './plugins/rate-limit.js'
+import sensible from './plugins/sensible.js'
+import serverSentEvents from './plugins/server-sent-events.js'
+import support from './plugins/support.js'
+import auth from './routes/auth.js'
+import root from './routes/root.js'
+import upload from './routes/upload.js'
 
 // Instantiate Fastify with some config
 export const app = Fastify({
@@ -95,14 +94,3 @@ pool
     ),
   )
   .catch((error) => console.error('Cannot connect to PostgreSQL server... \n' + error))
-
-// replicate
-//   .run('hjgp/dep2img:728be3b7e4b13b9d0449d33924aabb199a5395ccaf930421461982b6add31a74', {
-//     input: {
-//       before_image_path: '',
-//     },
-//   })
-//   .then((a2) => {
-//     console.log(JSON.stringify(a2, null, 2))
-//   })
-//   .catch((error) => console.error('Cannot connect to Replicate server... \n' + error))

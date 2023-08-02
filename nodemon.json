@@ -1,4 +1,4 @@
 {
-  "ext": "js",
-  "watch": ["dist"]
+  "ext": "cjs",
+  "watch": ["out"]
 }
