@@ -204,7 +204,7 @@ export default async (fastify: App, opts: Record<never, never>) => {
           sseClient.reply.sse({
             event: 'segmentation',
             id: image.id,
-            data: JSON.stringify((segmentation as string[])[3]),
+            data: (segmentation as string[])[3],
           }),
         )
         .catch(() => {
