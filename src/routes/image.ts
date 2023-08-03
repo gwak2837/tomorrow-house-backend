@@ -6,7 +6,7 @@ import { Type } from '@sinclair/typebox'
 import { App } from '../app.js'
 import { bucket } from '../common/google-cloud.js'
 import { replicate } from '../common/replicate.js'
-import { generateUniqueId } from '../common/utils.js'
+import { generateUniqueId, sleep } from '../common/utils.js'
 
 type SSEClient = {
   id: string
@@ -84,15 +84,20 @@ export default async (fastify: App, opts: Record<never, never>) => {
     const sseClient = sseClients.find((client) => client.id === clientId)
     if (!sseClient) throw reply.badRequest('No SSE client available')
 
-    const i2iImageURLs = (await replicate.run(
-      'hjgp/img2img:3aa53804847d9f1b29355673776a79348e9e287194c3135956a220bf9db7a58a',
-      {
-        input: {
-          input_image: imageURL,
-          space: spaceCategory,
+    let i2iImageURLs
+    try {
+      i2iImageURLs = (await replicate.run(
+        'hjgp/img2img:3aa53804847d9f1b29355673776a79348e9e287194c3135956a220bf9db7a58a',
+        {
+          input: {
+            input_image: imageURL,
+            space: spaceCategory,
+          },
         },
-      },
-    )) as string[]
+      )) as string[]
+    } catch (error) {
+      throw reply.badGateway('Replicate error')
+    }
 
     const images: Image[] = i2iImageURLs.map((url) => ({
       id: generateUniqueId(),
@@ -114,10 +119,39 @@ export default async (fastify: App, opts: Record<never, never>) => {
           sseClient.reply.sse({
             event: 'segmentation',
             id: image.id,
-            data: JSON.stringify((segmentation as string[])[3]),
+            data: (segmentation as string[])[3],
           }),
         )
+        .catch(() => {
+          throw reply.badGateway('Replicate error')
+        })
+
+      await sleep(1000)
     }
+  })
+
+  const schema2 = {
+    body: Type.Object({
+      imageURL: Type.String(),
+    }),
+  }
+
+  fastify.post('/image/ai/segmentation', { schema: schema2 }, async (req, reply) => {
+    const { imageURL } = req.body
+
+    let segmentation: string[]
+    try {
+      segmentation = (await replicate.run(
+        'hjgp/ram:af37d56889e57f4d37ed0cb663179049ee7448094a0eef0af55dcd6e81038f1b',
+        {
+          input: { input_image: imageURL },
+        },
+      )) as string[]
+    } catch (error) {
+      throw reply.badGateway('Replicate error')
+    }
+
+    return segmentation[3]
   })
 
   const schema3 = {
@@ -135,15 +169,20 @@ export default async (fastify: App, opts: Record<never, never>) => {
     if (!sseClient) throw reply.badRequest('No SSE client available')
 
     // 15~20 seconds
-    const inpaintImageURLs = (await replicate.run(
-      'hjgp/inpaint2img:9c0d69fae6f2435c4768eaf01eb841b470e90f6f121b643c3b200255a6e9b5a8',
-      {
-        input: {
-          input_image: targetImageURL,
-          input_mask_image: maskImageURL,
+    let inpaintImageURLs: string[]
+    try {
+      inpaintImageURLs = (await replicate.run(
+        'hjgp/inpaint2img:9c0d69fae6f2435c4768eaf01eb841b470e90f6f121b643c3b200255a6e9b5a8',
+        {
+          input: {
+            input_image: targetImageURL,
+            input_mask_image: maskImageURL,
+          },
         },
-      },
-    )) as string[]
+      )) as string[]
+    } catch (error) {
+      throw reply.badGateway('Replicate error')
+    }
 
     const images: Image[] = inpaintImageURLs.map((url) => ({
       id: generateUniqueId(),
@@ -168,6 +207,9 @@ export default async (fastify: App, opts: Record<never, never>) => {
             data: JSON.stringify((segmentation as string[])[3]),
           }),
         )
+        .catch(() => {
+          throw reply.badGateway('Replicate error')
+        })
     }
   })
 }

@@ -59,7 +59,7 @@ const closeListeners = closeWithGrace(
   { delay: +FASTIFY_CLOSE_GRACE_DELAY || 500 },
   async function ({ signal, err, manual }) {
     if (err) {
-      app.log.error(err)
+      console.error(err)
     }
     await app.close()
   },
