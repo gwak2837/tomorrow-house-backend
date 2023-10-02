@@ -18,7 +18,7 @@ const context = await esbuild.context({
       setup: (build) => build.onEnd(showOutfilesSize),
     },
   ],
-  target: ['node18'],
+  target: ['node20'],
   treeShaking: true,
 })
 

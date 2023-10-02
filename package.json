@@ -8,56 +8,60 @@
   },
   "scripts": {
     "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:dev:build\" \"npm:dev:start\"",
-    "dev:build": "NODE_ENV=development node esbuild.js",
+    "dev:build": "NODE_ENV=development node esbuild.mjs",
     "dev:start": "NODE_ENV=development nodemon -r dotenv/config out/index.cjs dotenv_config_path=.env.local.dev",
     "build": "NODE_ENV=production node esbuild.js",
     "start": "NODE_ENV=production node -r dotenv/config dist/index.cjs dotenv_config_path=.env.local",
-    "test": "npm run build && tsc -p test/tsconfig.json && tap --ts \"test/**/*.test.ts\""
+    "test": "npm run build && tsc -p test/tsconfig.json && tap --ts \"test/**/*.test.ts\"",
+    "type": "tsc --noEmit"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": "^20.6"
+  },
   "dependencies": {
-    "@fastify/cors": "^8.2.0",
-    "@fastify/error": "^3.2.0",
-    "@fastify/jwt": "^6.5.0",
+    "@fastify/cors": "^8.3.0",
+    "@fastify/error": "^3.3.0",
+    "@fastify/jwt": "^7.2.1",
     "@fastify/multipart": "^7.7.3",
-    "@fastify/oauth2": "^7.2.2",
-    "@fastify/rate-limit": "^7.6.0",
+    "@fastify/oauth2": "^7.4.0",
+    "@fastify/rate-limit": "^8.0.3",
     "@fastify/sensible": "^5.2.0",
-    "@google-cloud/storage": "^6.12.0",
-    "@sinclair/typebox": "^0.29.0",
-    "fastify": "^4.21.0",
+    "@google-cloud/storage": "^7.1.0",
+    "@sinclair/typebox": "^0.31.15",
+    "fastify": "^4.23.2",
     "fastify-cli": "^5.8.0",
     "fastify-plugin": "^4.5.1",
     "fastify-sse-v2": "^3.1.2",
-    "pg": "^8.11.1",
-    "replicate": "^0.14.1"
+    "pg": "^8.11.3",
+    "replicate": "^0.18.0"
   },
   "devDependencies": {
-    "@fastify/type-provider-typebox": "^3.3.0",
-    "@types/node": "^20.4.5",
+    "@fastify/type-provider-typebox": "^3.5.0",
+    "@tsconfig/node20": "^20.1.2",
+    "@types/node": "^20.6.2",
     "@types/pg": "^8.10.2",
-    "@types/tap": "^15.0.8",
-    "concurrently": "^8.2.0",
-    "esbuild": "^0.18.17",
-    "eslint": "^8.30.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-import": "^2.26.0",
-    "eslint-plugin-n": "^15.6.0",
+    "@types/tap": "^15.0.9",
+    "concurrently": "^8.2.1",
+    "esbuild": "^0.19.3",
+    "eslint": "^8.49.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.28.1",
+    "eslint-plugin-n": "^16.1.0",
     "eslint-plugin-promise": "^6.1.1",
     "fastify-tsconfig": "^1.0.1",
     "nodemon": "^3.0.1",
-    "prettier": "^3.0.0",
-    "tap": "^16.3.8",
+    "prettier": "^3.0.3",
+    "tap": "^18.0.1",
     "ts-node": "^10.9.1",
-    "typescript": "^5.1.6"
+    "typescript": "^5.2.2"
   },
   "overrides": {
     "gaxios": {
       "node-fetch": "^3.3.2"
     }
-  },
-  "type": "module"
+  }
 }
